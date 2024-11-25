@@ -5,12 +5,6 @@ name: Deploy MLFlow Server
 on:
   push:
     branches: [main]
-    paths:
-      - '**'
-    paths-ignore:
-      - 'README.md'
-      - '**/*.py'
-      - '**/*.ipynb'
 
 jobs:
   login-build-push:
