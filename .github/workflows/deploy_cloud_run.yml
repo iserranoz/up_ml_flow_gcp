@@ -5,6 +5,12 @@ name: Deploy MLFlow Server
 on:
   push:
     branches: [main]
+    paths:
+      - '**'
+    paths-ignore:
+      - 'README.md'
+      - '**/*.py'
+      - '**/*.ipynb'
 
 jobs:
   login-build-push:
@@ -17,31 +23,52 @@ jobs:
       REPOSITORY: ml-flow-repo
       SERVICE_ACCOUNT: ml-flow-up-sa@ml-flow-up-2024.iam.gserviceaccount.com
       SERVICE_NAME: ml-flow-cloud-server
+      DEPLOY: false
 
     steps:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Check if deploy is enabled
+      id: check_deploy
+      run: |
+        if [ "${{ env.DEPLOY }}" == "true" ]; then
+          echo "Deploy enabled."
+          echo "deploy=true" >> $GITHUB_ENV
+        else
+          echo "Deploy disabled. Skipping."
+          echo "deploy=false" >> $GITHUB_ENV
+        fi
+
+    - name: Skip deploy if not enabled
+      if: env.deploy == 'false'
+      run: echo "Deployment is disabled. Exiting workflow."
+
     - id: 'auth'
       name: Authenticate to Google Cloud
+      if: env.deploy == 'true'
       uses: google-github-actions/auth@v1
       with: 
         project_id: '${{ env.PROJECT_ID }}'
         credentials_json: '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}'
     
     - name: 'Docker config'
+      if: env.deploy == 'true'
       run: |-
         gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev 
 
     - name: 'Build container'
+      if: env.deploy == 'true'
       run: |-
         docker build -t "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/mlflow:${{ github.sha }}" .
       
     - name: 'Push container'
+      if: env.deploy == 'true'
       run: |-
         docker push "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/mlflow:${{ github.sha }}"
     
     - name: Deploy Google Cloud Run
+      if: env.deploy == 'true'
       run: |
         gcloud run deploy "${{ env.SERVICE_NAME }}" \
           --image "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/mlflow:${{ github.sha }}" \
