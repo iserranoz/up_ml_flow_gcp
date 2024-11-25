@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      REGION: us-central1
-      PROJECT_ID: ml-flow-up-2024
-      REPOSITORY: ml-flow-repo
-      SERVICE_ACCOUNT: ml-flow-up-sa@ml-flow-up-2024.iam.gserviceaccount.com
-      SERVICE_NAME: ml-flow-cloud-server
+      REGION: ""
+      PROJECT_ID: ""
+      REPOSITORY: ""
+      SERVICE_ACCOUNT: ""
+      SERVICE_NAME: ""
       DEPLOY: false
 
     steps:
